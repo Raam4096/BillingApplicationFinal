@@ -1,6 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="java.util.*" %>
 <%@ page import="com.products.ProductDto" %>
+<%
+  
+	RequestDispatcher dispatcher=request.getRequestDispatcher("GetProductServlet");
+	dispatcher.include(request,response);
+%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -23,17 +28,15 @@
         <!-- Separate Customer Form -->
         <form method="post" action="CustomerServlet">
             <div class="form-row">
-                <input type="text" placeholder="Customer Name" name="customername">
-                <input type="text" placeholder="Phone Number" name="phonenumber">
-                <input type="email" placeholder="Email" name="email">
+                <input type="text" placeholder="Customer Name" name="customername" value="<%=(String)session.getAttribute("cname")!=null?(String)session.getAttribute("cname"):"" %>">
+                <input type="text" placeholder="Phone Number" name="phonenumber" value="<%=(String)session.getAttribute("cphone")!=null?(String)session.getAttribute("cphone"):"" %>">
+                <input type="email" placeholder="Email" name="email" value="<%=(String)session.getAttribute("cmail")!=null?(String)session.getAttribute("cmail"):"" %>">
             </div>
             <div class="form-row">
-                <input type="text" placeholder="Address" name="address">
-                <input type="date" placeholder="Date" name="date">
-            </div>
-            <div class="form-row">
-                <button type="submit">Add Customer</button>
-            </div>
+                <input type="text" placeholder="Address" name="address" value="<%=(String)session.getAttribute("caddress")!=null?(String)session.getAttribute("caddress"):"" %>">
+                <input type="date" placeholder="Date" name="date" value="<%=(String)session.getAttribute("cdate")!=null?(String)session.getAttribute("cdate"):"" %>">
+       
+           <input type="submit" style="display:none;">
         </form>
     </div>
 
@@ -138,19 +141,36 @@
                         }
                     }
                 %>
+                  <%double gst=(total*18)/100;
+         double sgst=gst/2;
+         double cgst=gst/2;
+         double sp=total-gst;
+         %>
+                	<tr>
+
+					<td  colspan=3></td>
+
+				
+
+					<td>
+					CGST @ 9% :<Strong><%=cgst %></Strong> <br>
+					SGST @ 9% :<Strong><%=sgst %></Strong> <br>
+					Selling Price @ :<Strong><%=total-gst%></Strong><br>
+      				<strong>Grand Total: <%=total %></strong>
+      				</td>
+
+				</tr>
+                
             </tbody>
         </table>
     </div>
 
-    <div class="totals">
-        <label>Total:</label>
-        <input type="text" readonly value="<%= total %>">
-    </div>
+    
    <% session.setAttribute("totalamt",total);%> 
     <div class="download">
-    <form action="invoice.jsp">
+    <form action="InvoiceServlet">
         <% session.setAttribute("finalProductList",productList);  %>
-        <input type="submit" value="Download Invoice" class="download-btn">
+        <input type="submit" value="Download Invoice" class="download-btn" >
         </form>
     </div>
 

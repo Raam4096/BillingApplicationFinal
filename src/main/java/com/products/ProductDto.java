@@ -1,5 +1,7 @@
 package com.products;
 
+import com.itextpdf.text.pdf.PdfPCell;
+
 public class ProductDto {
 
 	private int productId;

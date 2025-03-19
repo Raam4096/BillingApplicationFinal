@@ -3,13 +3,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.List;
-
-import com.dbconnection.Connect;
-import com.products.ProductDto;
-
+import com.DbConnection.Connect;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -63,9 +57,7 @@ public class CustomerServlet extends HttpServlet {
 			
 			Connection con= Connect.connect();
 			String addCustomer="insert into customer (name,phone,address,date,email) values(?,?,?,?,?)";
-            String getProducts="select * from product";
             PreparedStatement ps=con.prepareStatement(addCustomer);
-            PreparedStatement ps1=con.prepareStatement(getProducts);
 			ps.setString(1,cd.getCustomerName());
 
 			ps.setString(2,cd.getPhonenumber());
@@ -74,23 +66,16 @@ public class CustomerServlet extends HttpServlet {
 
 			ps.setString(4,cd.getDate());
 			
-			ps.setString(5,cd.getEmail());
-            
+			ps.setString(5,cd.getEmail());   
 			
 			
 
 			int ins=ps.executeUpdate();
 			
-			ResultSet rs=ps1.executeQuery();
-			List<ProductDto> listOfProducts= new ArrayList<>();
-			while(rs.next()) {
-				ProductDto product=new ProductDto(rs.getInt(1), rs.getString(2) ,rs.getDouble(3));
-				listOfProducts.add(product);
-			}
+		
 			
-            request.getSession().setAttribute("productsData", listOfProducts);
 			if(ins>0) {
-			    pw.print("<script>alert('Customer Added Successfully');</script>");
+			   
 				RequestDispatcher rd= request.getRequestDispatcher("index.jsp");
 				rd.include(request, response);
 			}

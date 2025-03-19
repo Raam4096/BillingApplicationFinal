@@ -81,8 +81,7 @@ th, td {
      List<ProductDto>  listOfProducts=null;
      if(session.getAttribute("finalProductList") != null){
      listOfProducts= (List<ProductDto>)session.getAttribute("finalProductList");} %>
-	<div class="invoice-container" id="invoice"
-		style="border: 2px solid black">
+	<div class="invoice-container" id="invoice"	style="border: 2px solid black">
 
 		<div class="header d-flex justify-content-between align-items-center">
 
@@ -214,59 +213,39 @@ th, td {
 
 	<div class="text-center mt-3">
         <% session.invalidate(); %>
-		<button class="btn btn-primary" onclick="downloadInvoice()">Download
-			as PDF</button>
-
+		
 	</div>
 
 
 
 	<script>
 
-        async function downloadInvoice() {
 
-            const { jsPDF } = window.jspdf;
+	  window.onload = function () {
+	    const invoice = document.getElementById("invoice");
+	    
+	    html2canvas(invoice).then(canvas => {
+	      const imgData = canvas.toDataURL("image/png");
+	      const { jsPDF } = window.jspdf;
+	      const pdf = new jsPDF();
 
-            const invoiceElement = document.getElementById("invoice");
+	      const imgProps = pdf.getImageProperties(imgData);
+	      const pdfWidth = pdf.internal.pageSize.getWidth();
+	      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
+	      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+	      pdf.save("Invoice.pdf");
 
-
-            // Capture invoice as image using html2canvas
-
-            const canvas = await html2canvas(invoiceElement);
-
-            const imgData = canvas.toDataURL("image/png");
-
-            
-
-            // Create jsPDF document
-
-            const pdf = new jsPDF({
-
-                orientation: "portrait",
-
-                unit: "mm",
-
-                format: "a4"
-
-            });
+	      // Optional: Close the window after download (if opened in new tab)
+	      setTimeout(() => {
+	        window.close();
+	      }, 1000);
+	    });
+	  };
+	</script>
 
 
 
-            // Add image to PDF
-
-            pdf.addImage(imgData, "PNG", 10, 10, 190, 0);
-
-
-            
-            // Download PDF
-
-            pdf.save("invoice.pdf");
-            alert("Downloaded Successfully!");
-            window.location.href="index.jsp";
-        }
-
-    </script>
        
   
 </body>
