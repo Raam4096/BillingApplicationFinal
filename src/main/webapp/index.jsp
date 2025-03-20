@@ -168,7 +168,7 @@
     
    <% session.setAttribute("totalamt",total);%> 
     <div class="download">
-    <form action="InvoiceServlet">
+    <form action="InvoiceServlet"  onsubmit="setTimeout(() => { window.location.href='index.jsp'; }, 1000);">
         <% session.setAttribute("finalProductList",productList);  %>
         <input type="submit" value="Download Invoice" class="download-btn" >
         </form>
