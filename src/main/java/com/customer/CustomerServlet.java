@@ -1,9 +1,13 @@
+
+
 package com.customer;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
-import com.DbConnection.Connect;
+import java.sql.ResultSet;
+
+import com.dbconnection.Connect;
+
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -27,12 +31,9 @@ public class CustomerServlet extends HttpServlet {
 
     }
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
 		// TODO Auto-generated method stub
-         
-	    PrintWriter pw=response.getWriter();
-	    response.setContentType("text/html");
 		HttpSession hs=request.getSession();
 		
 		String customername=request.getParameter("customername");
@@ -57,7 +58,9 @@ public class CustomerServlet extends HttpServlet {
 			
 			Connection con= Connect.connect();
 			String addCustomer="insert into customer (name,phone,address,date,email) values(?,?,?,?,?)";
+			String getCustomerId="select customer_id from customer where phone=?";
             PreparedStatement ps=con.prepareStatement(addCustomer);
+            PreparedStatement ps1=con.prepareStatement(getCustomerId);
 			ps.setString(1,cd.getCustomerName());
 
 			ps.setString(2,cd.getPhonenumber());
@@ -68,16 +71,20 @@ public class CustomerServlet extends HttpServlet {
 			
 			ps.setString(5,cd.getEmail());   
 			
+			ps1.setString(1,cd.getPhonenumber());
 			
 
 			int ins=ps.executeUpdate();
-			
+			ResultSet rs=ps1.executeQuery();
+			if(rs.next()) {
+				hs.setAttribute("Invoice_Id", rs.getInt(1)+1000);
+			}
 		
 			
 			if(ins>0) {
 			   
-				RequestDispatcher rd= request.getRequestDispatcher("index.jsp");
-				rd.include(request, response);
+				RequestDispatcher rd= request.getRequestDispatcher("InvoiceServlet");
+				rd.forward(request, response);
 			}
 			
 			

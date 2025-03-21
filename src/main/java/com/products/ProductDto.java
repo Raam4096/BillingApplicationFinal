@@ -1,6 +1,5 @@
-package com.products;
 
-import com.itextpdf.text.pdf.PdfPCell;
+package com.products;
 
 public class ProductDto {
 
@@ -82,3 +81,5 @@ public class ProductDto {
 	}
 
 }
+
+

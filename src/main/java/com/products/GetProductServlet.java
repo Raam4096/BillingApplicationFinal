@@ -1,3 +1,5 @@
+
+
 package com.products;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,7 +13,7 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.DbConnection.Connect;
+import com.dbconnection.Connect;
 @WebServlet("/GetProductServlet")
 public class GetProductServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;

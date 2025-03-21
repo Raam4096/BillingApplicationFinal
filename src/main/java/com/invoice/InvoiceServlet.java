@@ -1,3 +1,5 @@
+
+
 package com.invoice;
 
 import java.io.IOException;
@@ -32,30 +34,42 @@ public class InvoiceServlet extends HttpServlet {
         // TODO Auto-generated constructor stub
     }
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		response.setContentType("application/pdf");
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("application/pdf");
         response.setHeader("Content-Disposition", "attachment; filename=invoice.pdf");
 
         HttpSession session = request.getSession();
+        
         List<ProductDto> productList = (List<ProductDto>) session.getAttribute("finalProductList");
+        if (productList == null) {
+            throw new ServletException("Error: Product list is missing in session.");
+        }
+
         String customerName = (String) session.getAttribute("cname");
         String customerPhone = (String) session.getAttribute("cphone");
         String customerAddress = (String) session.getAttribute("caddress");
         String customerEmail = (String) session.getAttribute("cmail");
         String invoiceDate = (String) session.getAttribute("cdate");
-        double totalAmount = (double) session.getAttribute("totalamt");
+        
+        Object totalAmtObj = session.getAttribute("totalamt");
+        double totalAmount = (totalAmtObj != null) ? Double.parseDouble(totalAmtObj.toString()) : 0.0;
+
+        if (invoiceDate == null || customerPhone == null) {
+            throw new ServletException("Error: Required customer details missing in session.");
+        }
+
+        int invoiceId = Integer.parseInt(session.getAttribute("Invoice_Id").toString());
 
         try {
             Document document = new Document();
             PdfWriter.getInstance(document, response.getOutputStream());
             document.open();
 
-            // Add invoice title
-            PdfPTable headerTable = new PdfPTable(2); // Two columns
-            headerTable.setWidthPercentage(100); // Full width
-            headerTable.setWidths(new float[]{2, 1}); // Adjust width ratio
+            // Invoice title
+            PdfPTable headerTable = new PdfPTable(2);
+            headerTable.setWidthPercentage(100);
+            headerTable.setWidths(new float[]{2, 1});
 
-            // Invoice Title (Centered)
             Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 20, BaseColor.BLACK);
             Paragraph title = new Paragraph("INVOICE", titleFont);
             title.setAlignment(Element.ALIGN_CENTER);
@@ -65,12 +79,8 @@ public class InvoiceServlet extends HttpServlet {
             titleCell.setHorizontalAlignment(Element.ALIGN_CENTER);
             headerTable.addCell(titleCell);
 
-            // Invoice ID and Date (Right Aligned)
-            String invoiceId = "INVOICE ID:"+((String) session.getAttribute("cdate")).substring(0,4)+(String)session.getAttribute("cphone");
-            String invoiceDate1 = "DATE: "+(String)session.getAttribute("cdate");
-
             Font infoFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
-            Paragraph invoiceDetails = new Paragraph(invoiceId + "\n" + invoiceDate1, infoFont);
+            Paragraph invoiceDetails = new Paragraph("INVOICE ID: " + invoiceId + "\nDATE: " + invoiceDate, infoFont);
             invoiceDetails.setAlignment(Element.ALIGN_RIGHT);
 
             PdfPCell invoiceCell = new PdfPCell(invoiceDetails);
@@ -79,29 +89,24 @@ public class InvoiceServlet extends HttpServlet {
             headerTable.addCell(invoiceCell);
 
             document.add(headerTable);
-            document.add(new Paragraph("\n")); // Add spacing after header
-
-
             document.add(new Paragraph("\n"));
 
             // Customer details
-            Paragraph billTo = new Paragraph("Bill To:",FontFactory.getFont(FontFactory.HELVETICA_BOLD));
-            document.add(billTo);
+            document.add(new Paragraph("Bill To:", FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
             document.add(new Paragraph("Name: " + customerName));
             document.add(new Paragraph("Address: " + customerAddress));
             document.add(new Paragraph("Phone: " + customerPhone));
             document.add(new Paragraph("Email: " + customerEmail));
             document.add(new Paragraph("Date: " + invoiceDate));
-
             document.add(new Paragraph("\n"));
 
             // Product table
             PdfPTable table = new PdfPTable(4);
             table.setWidthPercentage(100);
-            table.addCell(new Paragraph("Product ID",FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
-            table.addCell(new Paragraph("Product Name",FontFactory.getFont(FontFactory.HELVETICA_BOLD)));            
-            table.addCell(new Paragraph("Quantity",FontFactory.getFont(FontFactory.HELVETICA_BOLD)));        
-            table.addCell(new Paragraph("Total Price",FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
+            table.addCell(new Paragraph("Product ID", FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
+            table.addCell(new Paragraph("Product Name", FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
+            table.addCell(new Paragraph("Quantity", FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
+            table.addCell(new Paragraph("Total Price", FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
 
             for (ProductDto product : productList) {
                 table.addCell(String.valueOf(product.getProductId()));
@@ -109,34 +114,37 @@ public class InvoiceServlet extends HttpServlet {
                 table.addCell(String.valueOf(product.getProductQuantity()));
                 table.addCell(String.valueOf(product.getProductQuantity() * product.getProductPrice()));
             }
-      
-            PdfPCell cell = new PdfPCell(new Phrase(""));
-            cell.setColspan(2); // Spanning across 2 columns
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            table.addCell(cell);
-            table.addCell("Total :");
-            table.addCell(""+totalAmount);
-            // Total calculations
+
+            // GST calculations
             double gst = (totalAmount * 18) / 100;
             double cgst = gst / 2;
             double sgst = gst / 2;
             double sellingPrice = totalAmount - gst;
-            PdfPCell cell1 = new PdfPCell(new Phrase(""));
-            cell1.setColspan(3); // Spanning across 3 columns
-            cell1.setHorizontalAlignment(Element.ALIGN_CENTER);
-            table.addCell(cell1);
-            table.addCell(new Phrase("CGST (9%): " + cgst +"\n"+ "SGST (9%): " + sgst +"\n"+ "Selling Price: " + sellingPrice +"\n" +"Grand Total: " + totalAmount ));
+
+            PdfPCell emptyCell = new PdfPCell(new Phrase(""));
+            emptyCell.setColspan(2);
+            emptyCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(emptyCell);
+
+            table.addCell("Total:");
+            table.addCell("" + totalAmount);
+
+            PdfPCell taxCell = new PdfPCell(new Phrase("CGST (9%): " + cgst + "\nSGST (9%): " + sgst + "\nSelling Price: " + sellingPrice + "\nGrand Total: " + totalAmount));
+            taxCell.setColspan(3);
+            taxCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+            table.addCell(taxCell);
 
             document.add(table);
-            document.add(new Paragraph("For: Satyanandh Enterprises",FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
-            document.add(new Paragraph("Satya",FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
+            document.add(new Paragraph("\nFor: Satyanandh Enterprises", FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
+            document.add(new Paragraph("Satya", FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
             document.add(new Paragraph("Authorized Signatory"));
 
             document.close();
         } catch (Exception e) {
-            throw new IOException(e.getMessage());
+            throw new ServletException("Error generating PDF: " + e.getMessage());
         }
-        session.invalidate();
-	}
+
+      
+    }
 
 }

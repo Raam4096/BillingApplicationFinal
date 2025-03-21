@@ -1,5 +1,4 @@
 package com.dbconnection;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -11,3 +10,4 @@ public class Connect {
 	 return con;
 }
 }
+
